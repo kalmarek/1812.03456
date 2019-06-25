@@ -36,7 +36,7 @@ if K == nothing || LAMBDA == nothing
     throw(invalid_use_message)
 end
 
-@info("Running checks for Adj₅ + $K·Op₅ - $LAMBDA·Δ₅") 
+@info "Running checks for Adj₅ + $K·Op₅ - $LAMBDA·Δ₅"
 
 N = 5
 G = AutGroup(FreeGroup(N), special=true)
@@ -49,11 +49,11 @@ const DELTA_FILE = joinpath(prefix,"delta.jld")
 const SQADJOP_FILE = joinpath(prefix, "SqAdjOp_coeffs.jld")
 const ORBITDATA_FILE = joinpath(prefix, "OrbitData.jld")
 
-const fullpath = joinpath(prefix, string(LAMBDA))
+const fullpath = joinpath(prefix, "$(LAMBDA)_K=$K")
 isdir(fullpath) || mkpath(fullpath)
 const SOLUTION_FILE = joinpath(fullpath, "solution.jld")
 
-@info("Looking for delta.jld, SqAdjOp_coeffs.jld and OrbitData.jld in $prefix")
+@info "Looking for delta.jld, SqAdjOp_coeffs.jld and OrbitData.jld in $prefix"
 
 if isfile(DELTA_FILE) && isfile(SQADJOP_FILE) && isfile(ORBITDATA_FILE)
     # cached
@@ -65,19 +65,19 @@ if isfile(DELTA_FILE) && isfile(SQADJOP_FILE) && isfile(ORBITDATA_FILE)
     adj = GroupRingElem(adj_c, RG)
     op = GroupRingElem(op_c, RG);
 else
-    info("Computing Laplacian")
+    @info "Computing Laplacian"
     Δ = PropertyT.Laplacian(S, 2)
     PropertyT.saveGRElem(DELTA_FILE, Δ)
     RG = parent(Δ)
 
-    info("Computing Sq, Adj, Op")
-    @time sq, adj, op = Sq(RG), Adj(RG), Op(RG)
+    @info "Computing Sq, Adj, Op"
+    @time sq, adj, op = SqAdjOp(RG, N)
     
     save(SQADJOP_FILE, "Sq", sq.coeffs, "Adj", adj.coeffs, "Op", op.coeffs)
 
-    info("Compute OrbitData")
+    @info "Compute OrbitData"
     if !isfile(ORBITDATA_FILE)
-        orbit_data = PropertyT.OrbitData(RG, sett.autS)
+        orbit_data = PropertyT.OrbitData(RG, WreathProduct(PermGroup(2), PermGroup(N)))
         save(ORBITDATA_FILE, "OrbitData", orbit_data)
     else
         orbit_data = load(ORBITDATA_FILE, "OrbitData")
@@ -87,23 +87,21 @@ end;
 orbit_data = PropertyT.decimate(orbit_data);
 
 elt = adj + K*op;
+ELT_STRING = "Adj_$(N)+$(K)·Op_$(N)"
 
-info("Looking for solution.jld in $fullpath")
+@info "Looking for solution.jld in $fullpath" 
 
 if !isfile(SOLUTION_FILE)
-    info("solution.jld not found, attempting to recreate one.")
+    @info "solution.jld not found, attempting to recreate one."
     
-    SDP_problem, varλ, varP = PropertyT.SOS_problem(elt, Δ, orbit_data; upper_bound=LAMBDA)
+    SDP_problem, varP = PropertyT.SOS_problem(elt, Δ, orbit_data; upper_bound=LAMBDA)
     
-    begin
-        scs_solver = SCS.SCSSolver(linear_solver=SCS.Direct,
-            eps=1e-12,
-            max_iters=200_000,
-            alpha=1.5,
-            acceleration_lookback=1)
-
-        JuMP.setsolver(SDP_problem, scs_solver)
-    end
+    with_SCS = JuMP.with_optimizer(SCS.Optimizer, linear_solver=SCS.Direct,
+                             eps=1e-12,
+                             max_iters=500_000,
+                             alpha=1.5,
+                             acceleration_lookback=1,
+                             warm_start=true)
     
     λ = Ps = ws = nothing
     const WARMSTART_FILE = joinpath(fullpath, "warmstart.jld")
@@ -111,33 +109,34 @@ if !isfile(SOLUTION_FILE)
         ws = load(WARMSTART_FILE, "warmstart")
     end
 
-    i = 0
-    # for i in 1:6
-    status= :Unknown
-    while status !=:Optimal
-        i += 1
-        SOLVERLOG_FILE = joinpath(fullpath, "solver_$(now()).log")
-        status, (λ, Ps, ws) = PropertyT.solve(SOLVERLOG_FILE, SDP_problem, varλ, varP, ws);
-        precision = abs(λ - LAMBDA)
-        println("i = $i, \t precision = $precision")
+#     i = 0
+    for i in 1:3
+#     status= :Unknown
+#     while status !=:Optimal
+#         i += 1
+        SOLVERLOG_FILE = joinpath(fullpath, "$(ELT_STRING)_solver_$(now()).log")
+        @info "Recording solvers progress in" SOLVERLOG_FILE
+        status, ws = PropertyT.solve(SOLVERLOG_FILE, SDP_problem, with_SCS, ws);
+        λ = value(SDP_problem[:λ])
+        Ps = [value.(P) for P in varP]
         
         if all((!isnan).(ws[1]))
-            save(WARMSTART_FILE, "warmstart", ws, "λ", λ, "Ps", Ps)
-            save(WARMSTART_FILE[1:end-4]*"_$(now()).jld", "warmstart", ws, "λ", λ, "Ps", Ps)
+            save(WARMSTART_FILE, "warmstart", (ws.primal, ws.dual, ws.slack), "Ps", Ps, "λ", λ)
+            save(WARMSTART_FILE[1:end-4]*"$now()"*".jld", "warmstart", (ws.primal, ws.dual, ws.slack), "Ps", Ps, "λ", λ)
         else
-            warn("No valid solution was saved!")
+            @warn "No valid solution was saved!"
         end
     end
 
-    info("Reconstructing P...")
+    @info "Reconstructing P..."
     @time P = PropertyT.reconstruct(Ps, orbit_data);
-    info("Computing Q = √P")
-    @time const Q = real(sqrtm(P));
+    @info "Computing Q = √P"
+    @time const Q = real(sqrt(P));
     
     save(SOLUTION_FILE, "λ", λ, "Q", Q)
 end
 
-info("Checking the sum of squares solution for 36(Adj₅ + $K·Op₅) - $LAMBDA·Δ₅") 
+@info "Checking the sum of squares solution for Adj₅ + $K·Op₅ - $LAMBDA·Δ₅"
 Q, λ = load(SOLUTION_FILE, "Q", "λ")
 
 function SOS_residual(eoi::GroupRingElem, Q::Matrix)
@@ -146,19 +145,20 @@ function SOS_residual(eoi::GroupRingElem, Q::Matrix)
     return eoi - sos
 end
 
-info("In floating point arithmetic:")
+@info "In floating point arithmetic:"
 EOI = elt - λ*Δ
 b = SOS_residual(EOI, Q)
 @show norm(b, 1);
 
-info("In interval arithmetic:")
+@info "In interval arithmetic:"
 EOI_int = elt - @interval(λ)*Δ;
-Q_int = PropertyT.augIdproj(Q);
-@assert all([zero(eltype(Q)) in sum(view(Q_int, :, i)) for i in 1:size(Q_int, 2)])
-b_int = SOS_residual(EOI_int, Q_int)
+Q_int, check_columns_in_augmentation_ideal = PropertyT.augIdproj(Interval, Q);
+@assert check_columns_in_augmentation_ideal
+
+b_int = SOS_residual(EOI_int, Q_int);
 @show norm(b_int, 1);
 
 λ_cert = @interval(λ) - 2^2*norm(b_int,1)
-info("λ is certified to be > ", λ_cert.lo)
+@info "λ is certified to be > " λ_cert.lo
 
-info("i.e Adj₅ + $K·Op₅ - $((λ_cert/36).lo)·Δ₅ ∈ Σ²₂ ISAut(F₅)")
+@info "i.e Adj₅ + $K·Op₅ - ($(λ_cert.lo))·Δ₅ ∈ Σ²₂ ISAut(F₅)"
