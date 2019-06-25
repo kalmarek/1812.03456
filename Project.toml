@@ -1,0 +1,7 @@
+[deps]
+AbstractAlgebra = "c3fe647b-3220-5bb0-a1ea-a7954cac585d"
+GroupRings = "0befed6a-bd73-11e8-1e41-a1190947c2f5"
+Groups = "5d8bd718-bd84-11e8-3b40-ad14f4a32557"
+Nemo = "2edaba10-b0f1-5616-af89-8c11ac63239a"
+PropertyT = "03b72c93-0167-51e2-8a1e-eb4ff1fb940d"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
