@@ -25,20 +25,24 @@ end
 K = LAMBDA = nothing 
 
 for i in 1:2:length(ARGS)
-    if ARGS[i] == "-k"
-        K = parse(Float64, ARGS[i+1])
-    elseif ARGS[i] == "-lambda"
-        LAMBDA = parse(Float64, ARGS[i+1])
+    if ARGS[i] == "--k"
+        try
+            K = parse(Float64, ARGS[i+1])
+        catch
+            throw(invalid_use_message)
+        end
+    elseif ARGS[i] == "--lambda"
+        try
+            LAMBDA = parse(Float64, ARGS[i+1])
+        catch
+            throw(invalid_use_message)
+        end
     end
 end
 
-if K == nothing || LAMBDA == nothing
-    throw(invalid_use_message)
-end
-
-@info "Running checks for Adj₅ + $K·Op₅ - $LAMBDA·Δ₅"
-
 N = 5
+@info "Running checks for Adj_$N + $K·Op_$N - $LAMBDA·Δ_$N"
+
 G = AutGroup(FreeGroup(N), special=true)
 S = generating_set(G)
 
@@ -161,4 +165,4 @@ b_int = SOS_residual(EOI_int, Q_int);
 λ_cert = @interval(λ) - 2^2*norm(b_int,1)
 @info "λ is certified to be > " λ_cert.lo
 
-@info "i.e Adj₅ + $K·Op₅ - ($(λ_cert.lo))·Δ₅ ∈ Σ²₂ ISAut(F₅)"
+@info "i.e Adj_$N + $K·Op_$N - ($(λ_cert.lo))·Δ_$N ∈ Σ²₂ ISAut(F_$N)"
