@@ -6,12 +6,12 @@ using AbstractAlgebra
 using Groups
 using GroupRings
 using PropertyT
-
-using JuMP
-using IntervalArithmetic
-
 using SCS
-using JLD
+
+using PropertyT.JuMP
+using PropertyT.IntervalArithmetic
+
+using PropertyT.JLD
 
 include(joinpath("src", "sqadjop.jl"))
 
