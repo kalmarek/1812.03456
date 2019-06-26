@@ -110,10 +110,9 @@ if !isfile(SOLUTION_FILE)
         end
     end
 
-    @info "Reconstructing P..."
-    @time P = PropertyT.reconstruct(Ps, orbit_data);
-    @info "Computing Q = √P"
-    @time const Q = real(sqrt(P));
+    @info "Reconstructing Q..."
+    Qs = real.(sqrt.(Ps))
+    @time const Q = PropertyT.reconstruct(Qs, orbit_data);
     
     save(SOLUTION_FILE, "λ", λ, "Q", Q)
 end
