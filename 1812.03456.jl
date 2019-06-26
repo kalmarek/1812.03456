@@ -84,27 +84,36 @@ if !isfile(SOLUTION_FILE)
                              acceleration_lookback=1,
                              warm_start=true)
     
-    λ = Ps = ws = nothing
-    const WARMSTART_FILE = joinpath(fullpath, "warmstart.jld")
-    if isfile(WARMSTART_FILE)
-        ws = load(WARMSTART_FILE, "warmstart")
-    end
-
-#     for i in 1:3
-    status= :Unknown
-    while status !=:Optimal
-        SOLVERLOG_FILE = joinpath(fullpath, "$(ELT_STRING)_solver_$(now()).log")
-        @info "Recording solvers progress in" SOLVERLOG_FILE
-        status, ws = PropertyT.solve(SOLVERLOG_FILE, SDP_problem, with_SCS, ws);
-        λ = value(SDP_problem[:λ])
-        Ps = [value.(P) for P in varP]
-        
-        if all((!isnan).(ws[1]))
-            save(WARMSTART_FILE, "warmstart", (ws.primal, ws.dual, ws.slack), "Ps", Ps, "λ", λ)
-            save(WARMSTART_FILE[1:end-4]*"$(now())"*".jld", "warmstart", (ws.primal, ws.dual, ws.slack), "Ps", Ps, "λ", λ)
-        else
-            @warn "No valid solution was saved!"
+    λ, Ps = let
+        λ = Ps = ws = nothing
+        WARMSTART_FILE = joinpath(fullpath, "warmstart.jld")
+        if isfile(WARMSTART_FILE)
+            ws = load(WARMSTART_FILE, "warmstart")
         end
+        
+#         for i in 1:3
+        status= :Unknown
+        while status !=:Optimal
+            SOLVERLOG_FILE = joinpath(fullpath, "$(ELT_STRING)_solver_$(now()).log")
+            @info "Recording solvers progress in" SOLVERLOG_FILE
+            status, ws = PropertyT.solve(SOLVERLOG_FILE, SDP_problem, with_SCS, ws);
+            λ = value(SDP_problem[:λ])
+            Ps = [value.(P) for P in varP]
+
+            if all((!isnan).(ws[1]))
+                save(WARMSTART_FILE,
+                    "warmstart", (ws.primal, ws.dual, ws.slack), 
+                    "Ps", Ps,
+                    "λ", λ)
+                save(WARMSTART_FILE[1:end-4]*"$(now())"*".jld", 
+                    "warmstart", (ws.primal, ws.dual, ws.slack),
+                    "Ps", Ps,
+                    "λ", λ)
+            else
+                @warn "No valid solution was saved!"
+            end
+        end
+        λ, Ps # return from let statement
     end
 
     @info "Reconstructing Q..."
