@@ -91,11 +91,9 @@ if !isfile(SOLUTION_FILE)
         ws = load(WARMSTART_FILE, "warmstart")
     end
 
-#     i = 0
-    for i in 1:3
-#     status= :Unknown
-#     while status !=:Optimal
-#         i += 1
+#     for i in 1:3
+    status= :Unknown
+    while status !=:Optimal
         SOLVERLOG_FILE = joinpath(fullpath, "$(ELT_STRING)_solver_$(now()).log")
         @info "Recording solvers progress in" SOLVERLOG_FILE
         status, ws = PropertyT.solve(SOLVERLOG_FILE, SDP_problem, with_SCS, ws);
@@ -104,7 +102,7 @@ if !isfile(SOLUTION_FILE)
         
         if all((!isnan).(ws[1]))
             save(WARMSTART_FILE, "warmstart", (ws.primal, ws.dual, ws.slack), "Ps", Ps, "λ", λ)
-            save(WARMSTART_FILE[1:end-4]*"$now()"*".jld", "warmstart", (ws.primal, ws.dual, ws.slack), "Ps", Ps, "λ", λ)
+            save(WARMSTART_FILE[1:end-4]*"$(now())"*".jld", "warmstart", (ws.primal, ws.dual, ws.slack), "Ps", Ps, "λ", λ)
         else
             @warn "No valid solution was saved!"
         end
