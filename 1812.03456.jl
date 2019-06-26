@@ -13,34 +13,12 @@ using PropertyT.IntervalArithmetic
 
 using PropertyT.JLD
 
+include(joinpath("src", "argparse.jl"))
 include(joinpath("src", "sqadjop.jl"))
 
-invalid_use_message = """You need to call this script in the parent folder of oSAutF5_r2 folder.
-Provide also the two (numerical) parameters: `-k` and `-lambda`"""
+K, LAMBDA = parse_args(ARGS)
 
-if !(iseven(length(ARGS)))
-    throw(invalid_use_message)
-end
-
-K = LAMBDA = nothing 
-
-for i in 1:2:length(ARGS)
-    if ARGS[i] == "--k"
-        try
-            K = parse(Float64, ARGS[i+1])
-        catch
-            throw(invalid_use_message)
-        end
-    elseif ARGS[i] == "--lambda"
-        try
-            LAMBDA = parse(Float64, ARGS[i+1])
-        catch
-            throw(invalid_use_message)
-        end
-    end
-end
-
-N = 5
+const N = 5
 @info "Running checks for Adj_$N + $K·Op_$N - $LAMBDA·Δ_$N"
 
 G = AutGroup(FreeGroup(N), special=true)
