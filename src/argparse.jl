@@ -4,7 +4,7 @@ Provide also the two (numerical) parameters: `--k` and `--lambda`"""
 
     iseven(length(args)) || throw(invalid_use_message)
 
-    k, λ = nothing, nothing
+    n, k, λ = 5, nothing, nothing
 
     for i in 1:2:length(ARGS)
         if ARGS[i] == "--k"
@@ -19,12 +19,17 @@ Provide also the two (numerical) parameters: `--k` and `--lambda`"""
             catch
                 throw(invalid_use_message)
             end
+        elseif ARGS[i] == "--n"
+            n = try
+                parse(Int, ARGS[i+1])
+            catch
+                throw(invalid_use_message)
+            end
         end
     end
-    @show k, λ
     
     if isnothing(k) || isnothing(λ)
         throw(invalid_use_message)
     end
-    return k, λ
+    return n, k, λ
 end 

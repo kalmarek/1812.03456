@@ -16,9 +16,8 @@ using PropertyT.JLD
 include(joinpath("src", "argparse.jl"))
 include(joinpath("src", "sqadjop.jl"))
 
-K, LAMBDA = parse_args(ARGS)
+N, K, LAMBDA = parse_args(ARGS)
 
-const N = 5
 @info "Running checks for Adj_$N + $K·Op_$N - $LAMBDA·Δ_$N"
 
 G = AutGroup(FreeGroup(N), special=true)
