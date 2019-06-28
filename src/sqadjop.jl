@@ -92,35 +92,10 @@ function Op(RG::GroupRing, N::Integer)
     return op÷factorial(N-2)^2
 end
 
-function Ygrek(RG::GroupRing, N)
-    ygrek = RG()
-    elt = RG(generating_set(RG.group)[1])
-
-    G = PermutationGroup(N)
-    elts = Dict(g=>g(elt) for g in G)
-
-    for g in G
-        for h in G
-            if isadjacent(g,h)
-                a = elts[g] - elts[h]
-                GroupRings.addeq!(ygrek, *(a, a, false))
-                a = star(elts[g]) - elts[h]
-                GroupRings.addeq!(ygrek, *(a, a, false))
-                a = star(elts[g]) - star(elts[h])
-                GroupRings.addeq!(ygrek, *(a, a, false))
-                a = elts[g] - star(elts[h])
-                GroupRings.addeq!(ygrek, *(a, a, false))
-            end
-        end
-    end
-    return RG(ygrek.coeffs.÷(2factorial(N-2)^2))
-end
-
-
-for Op in [:Sq, :Adj, :Op, :Ygrek]
+for Elt in [:Sq, :Adj, :Op]
     @eval begin
-        $Op(RG::GroupRing{AutGroup{N}}) where N = $Op(RG, N)
-        $Op(RG::GroupRing{<:MatSpace}) = $Op(RG, nrows(RG.group))
+        $Elt(RG::GroupRing{AutGroup{N}}) where N = $Elt(RG, N)
+        $Elt(RG::GroupRing{<:MatSpace}) = $Elt(RG, nrows(RG.group))
     end
 end
 
