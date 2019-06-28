@@ -35,6 +35,8 @@ isadjacent(σ::perm, τ::perm, i=1, j=2) =
     (σ[i] == τ[j] && σ[j] ≠ τ[i]) || # first σ equal to second τ
     (σ[j] == τ[i] && σ[i] ≠ τ[j])    # second σ equal to first τ
 
+Base.div(X::GroupRingElem, x::Number) = parent(X)(X.coeffs.÷x)
+
 function Sq(RG::GroupRing, N::Integer)
     S₂ = generating_set(RG.group, 2)
     ℤ = Int64
@@ -46,7 +48,7 @@ function Sq(RG::GroupRing, N::Integer)
     for σ in Alt_N
         GroupRings.addeq!(sq, *(σ(Δ₂), σ(Δ₂), false))
     end
-    return RG(sq.coeffs.÷factorial(N-2))
+    return sq÷factorial(N-2)
 end
 
 function Adj(RG::GroupRing, N::Integer)
@@ -65,7 +67,7 @@ function Adj(RG::GroupRing, N::Integer)
             end
         end
     end
-    return RG(adj.coeffs.÷factorial(N-2)^2)
+    return adj÷factorial(N-2)^2
 end
 
 function Op(RG::GroupRing, N::Integer)
@@ -87,7 +89,7 @@ function Op(RG::GroupRing, N::Integer)
             end
         end
     end
-    return RG(op.coeffs.÷factorial(N-2)^2)
+    return op÷factorial(N-2)^2
 end
 
 function Ygrek(RG::GroupRing, N)
@@ -144,5 +146,5 @@ function SqAdjOp(RG::GroupRing, N::Integer)
     end
 
     k = factorial(N-2)
-    return RG(sq.coeffs.÷k), RG(adj.coeffs.÷k^2), RG(op.coeffs.÷k^2)
+    return sq÷k, adj÷k^2, op÷k^2
 end
