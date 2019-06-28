@@ -124,11 +124,11 @@ version = "0.10.3"
 
 [[GroupRings]]
 deps = ["AbstractAlgebra", "LinearAlgebra", "Markdown", "SparseArrays"]
-git-tree-sha1 = "30ed912be2eb74523699bfdaaefd5d5426c43afa"
+git-tree-sha1 = "6d43558d0e7946d4e0e3d94a108344b2514e95b7"
 repo-rev = "master"
 repo-url = "https://github.com/kalmarek/GroupRings.jl"
 uuid = "0befed6a-bd73-11e8-1e41-a1190947c2f5"
-version = "0.2.0"
+version = "0.2.1"
 
 [[Groups]]
 deps = ["AbstractAlgebra", "LinearAlgebra", "Markdown"]
@@ -278,11 +278,11 @@ uuid = "9abbd945-dff8-562f-b5e8-e1ebf5ef1b79"
 
 [[PropertyT]]
 deps = ["AbstractAlgebra", "Dates", "GroupRings", "Groups", "IntervalArithmetic", "JLD", "JuMP", "LinearAlgebra", "Markdown", "MathProgBase", "Nemo", "Printf", "SparseArrays"]
-git-tree-sha1 = "a9681b92bbb885d058d22beab24533522cb37de7"
+git-tree-sha1 = "bc1b75a23a48cb6fd24be155b8ae4af2a3b85489"
 repo-rev = "master"
 repo-url = "https://github.com/kalmarek/PropertyT.jl"
 uuid = "03b72c93-0167-51e2-8a1e-eb4ff1fb940d"
-version = "0.2.0"
+version = "0.2.1"
 
 [[REPL]]
 deps = ["InteractiveUtils", "Markdown", "Sockets"]
