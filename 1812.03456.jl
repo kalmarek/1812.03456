@@ -14,14 +14,12 @@ using PropertyT.IntervalArithmetic
 using PropertyT.JLD
 
 include(joinpath("src", "argparse.jl"))
-include(joinpath("src", "sqadjop.jl"))
-
 N, K, LAMBDA = parse_args(ARGS)
 
 @info "Running checks for Adj_$N + $K·Op_$N - $LAMBDA·Δ_$N"
 
 G = AutGroup(FreeGroup(N), special=true)
-S = generating_set(G)
+S = PropertyT.generating_set(G)
 
 const prefix = "oSAutF$(N)_r2"
 isdir(prefix) || mkpath(prefix)
@@ -53,7 +51,7 @@ else
 
     @info "Computing Sq, Adj, Op"
     @time sq, adj, op = SqAdjOp(RG, N)
-    
+
     save(SQADJOP_FILE, "Sq", sq.coeffs, "Adj", adj.coeffs, "Op", op.coeffs)
 
     @info "Compute OrbitData"
@@ -70,13 +68,13 @@ orbit_data = PropertyT.decimate(orbit_data);
 elt = adj + K*op;
 ELT_STRING = "Adj_$(N)+$(K)·Op_$(N)"
 
-@info "Looking for solution.jld in $fullpath" 
+@info "Looking for solution.jld in $fullpath"
 
 if !isfile(SOLUTION_FILE)
-    @info "solution.jld not found, attempting to recreate one."
-    
+    @info "$SOLUTION_FILE not found, attempting to recreate one."
+
     SDP_problem, varP = PropertyT.SOS_problem(elt, Δ, orbit_data; upper_bound=LAMBDA)
-    
+
     with_SCS = JuMP.with_optimizer(SCS.Optimizer, linear_solver=SCS.Direct,
                              eps=1e-12,
                              max_iters=500_000,
