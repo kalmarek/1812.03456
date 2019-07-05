@@ -30,6 +30,7 @@ const ORBITDATA_FILE = joinpath(prefix, "OrbitData.jld")
 
 const fullpath = joinpath(prefix, "$(LAMBDA)_K=$K")
 isdir(fullpath) || mkpath(fullpath)
+const WARMSTART_FILE = joinpath(fullpath, "warmstart.jld")
 const SOLUTION_FILE = joinpath(fullpath, "solution.jld")
 
 @info "Looking for delta.jld, SqAdjOp_coeffs.jld and OrbitData.jld in $prefix"
@@ -70,6 +71,8 @@ ELT_STRING = "Adj_$(N)+$(K)·Op_$(N)"
 
 @info "Looking for solution.jld in $fullpath"
 
+interrupted = false
+
 if !isfile(SOLUTION_FILE)
     @info "$SOLUTION_FILE not found, attempting to recreate one."
 
@@ -81,47 +84,47 @@ if !isfile(SOLUTION_FILE)
                              alpha=1.5,
                              acceleration_lookback=1,
                              warm_start=true)
-    
-    λ, Ps = let
+
+    let
         λ = Ps = ws = nothing
-        WARMSTART_FILE = joinpath(fullpath, "warmstart.jld")
         if isfile(WARMSTART_FILE)
             ws = load(WARMSTART_FILE, "warmstart")
         end
-        
-#         for i in 1:3
+
+        interrupted = false
         status= :Unknown
         while status !=:Optimal
             SOLVERLOG_FILE = joinpath(fullpath, "$(ELT_STRING)_solver_$(now()).log")
             @info "Recording solvers progress in" SOLVERLOG_FILE
-            status, ws = PropertyT.solve(SOLVERLOG_FILE, SDP_problem, with_SCS, ws);
+            @time status, ws = PropertyT.solve(SOLVERLOG_FILE, SDP_problem, with_SCS, ws);
             λ = value(SDP_problem[:λ])
             Ps = [value.(P) for P in varP]
 
-            if all((!isnan).(ws[1]))
+            if all((!isnan).(ws[1])) # solution looks valid
                 save(WARMSTART_FILE,
-                    "warmstart", (ws.primal, ws.dual, ws.slack), 
-                    "Ps", Ps,
-                    "λ", λ)
-                save(WARMSTART_FILE[1:end-4]*"$(now())"*".jld", 
-                    "warmstart", (ws.primal, ws.dual, ws.slack),
-                    "Ps", Ps,
-                    "λ", λ)
+                    "warmstart", (ws.primal, ws.dual, ws.slack), "Ps", Ps, "λ", λ)
+                save(WARMSTART_FILE[1:end-4]*"$(now())"*".jld",
+                    "warmstart", (ws.primal, ws.dual, ws.slack), "Ps", Ps, "λ", λ)
             else
                 @warn "No valid solution was saved!"
+                interrupted = true
+                break
             end
         end
-        λ, Ps # return from let statement
-    end
 
-    @info "Reconstructing Q..."
-    Qs = real.(sqrt.(Ps))
-    @time const Q = PropertyT.reconstruct(Qs, orbit_data);
-    
-    save(SOLUTION_FILE, "λ", λ, "Q", Q)
+        if interrupted
+            @info "Reading the last saved warmstart for λ and Ps"
+            λ, Ps = load(WARMSTART_FILE, "λ", "Ps")
+        end
+
+        @info "Reconstructing Q..."
+        Qs = real.(sqrt.(Ps))
+        @time Q = PropertyT.reconstruct(Qs, orbit_data);
+        save(SOLUTION_FILE, "λ", λ, "Q", Q)
+    end
 end
 
-@info "Checking the sum of squares solution for Adj₅ + $K·Op₅ - $LAMBDA·Δ₅"
+@info "Checking the sum of squares solution for Adj_N + $K·Op_N - $LAMBDA·Δ_N"
 Q, λ = load(SOLUTION_FILE, "Q", "λ")
 
 function SOS_residual(eoi::GroupRingElem, Q::Matrix)
@@ -130,20 +133,19 @@ function SOS_residual(eoi::GroupRingElem, Q::Matrix)
     return eoi - sos
 end
 
-@info "In floating point arithmetic:"
-EOI = elt - λ*Δ
-b = SOS_residual(EOI, Q)
-@show norm(b, 1);
+let EOI = elt - λ*Δ
+    residual = SOS_residual(EOI, Q)
+    @info "In floating point arithmetic the ℓ₁-norm of the residual" norm(residual, 1);
+end
 
-@info "In interval arithmetic:"
-EOI_int = elt - @interval(λ)*Δ;
-Q_int, check_columns_in_augmentation_ideal = PropertyT.augIdproj(Interval, Q);
-@assert check_columns_in_augmentation_ideal
+let EOI_int = elt - @interval(λ)*Δ;
+    Q_int, check_columns_in_augmentation_ideal = PropertyT.augIdproj(Interval, Q);
+    @assert check_columns_in_augmentation_ideal
 
-b_int = SOS_residual(EOI_int, Q_int);
-@show norm(b_int, 1);
+    residual_int = SOS_residual(EOI_int, Q_int);
+    @info "In interval arithmetic the ℓ₁-norm of the residual" norm(residual_int, 1);
 
-λ_cert = @interval(λ) - 2^2*norm(b_int,1)
-@info "λ is certified to be > " λ_cert.lo
-
-@info "i.e Adj_$N + $K·Op_$N - ($(λ_cert.lo))·Δ_$N ∈ Σ²₂ ISAut(F_$N)"
+    λ_cert = @interval(λ) - 2^2*norm(residual_int,1)
+    @info "λ is certified to be > " λ_cert.lo
+    @info "i.e Adj_$N + $K·Op_$N - ($(λ_cert.lo))·Δ_$N ∈ Σ²₂ ISAut(F_$N)"
+end
