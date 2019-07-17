@@ -14,7 +14,7 @@ using PropertyT.IntervalArithmetic
 using PropertyT.JLD
 
 include(joinpath("src", "argparse.jl"))
-N, K, LAMBDA, eps = parse_args(ARGS)
+N, K, LAMBDA, scseps = parse_args(ARGS)
 
 @info "Running checks for Adj_$N + $K·Op_$N - $LAMBDA·Δ_$N"
 
@@ -79,8 +79,8 @@ if !isfile(SOLUTION_FILE)
     SDP_problem, varP = PropertyT.SOS_problem(elt, Δ, orbit_data; upper_bound=LAMBDA)
 
     with_SCS = JuMP.with_optimizer(SCS.Optimizer, linear_solver=SCS.Direct,
-                             eps=eps,
                              max_iters=500_000,
+                             eps=scseps,
                              alpha=1.5,
                              acceleration_lookback=1,
                              warm_start=true)

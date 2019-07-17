@@ -8,7 +8,7 @@ Optional prameters:
 
     iseven(length(args)) || throw(invalid_use_message)
 
-    n, k, λ = 5, nothing, nothing, 1e-12
+    n, k, λ, scseps = 5, nothing, nothing, 1e-12
 
     for i in 1:2:length(ARGS)
         arg = ARGS[i]
@@ -32,7 +32,7 @@ Optional prameters:
                 throw(invalid_use_message)
             end
         elseif arg == "--eps"
-            eps = try
+            scseps = try
                 parse(Float64, next_arg)
             catch
                 throw(invalid_use_message)
@@ -43,5 +43,5 @@ Optional prameters:
     if isnothing(k) || isnothing(λ)
         throw(invalid_use_message)
     end
-    return n, k, λ, eps
+    return n, k, λ, scseps
 end 
