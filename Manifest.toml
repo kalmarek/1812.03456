@@ -17,9 +17,9 @@ version = "0.8.10"
 
 [[BinaryProvider]]
 deps = ["Libdl", "Logging", "SHA"]
-git-tree-sha1 = "8153fd64131cd00a79544bb23788877741f627bb"
+git-tree-sha1 = "c7361ce8a2129f20b0e05a89f7070820cfed6648"
 uuid = "b99e7846-7c00-51b0-8f62-c81ae34c0232"
-version = "0.5.5"
+version = "0.5.6"
 
 [[Blosc]]
 deps = ["BinaryProvider", "CMakeWrapper", "Compat", "Libdl"]
@@ -64,10 +64,10 @@ uuid = "34da2185-b29b-5c13-b0c7-acf172513d20"
 version = "2.1.0"
 
 [[DataStructures]]
-deps = ["InteractiveUtils", "OrderedCollections", "Random", "Serialization", "Test"]
-git-tree-sha1 = "ca971f03e146cf144a9e2f2ce59674f5bf0e8038"
+deps = ["InteractiveUtils", "OrderedCollections"]
+git-tree-sha1 = "0809951a1774dc724da22d26e4289bbaab77809a"
 uuid = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
-version = "0.15.0"
+version = "0.17.0"
 
 [[Dates]]
 deps = ["Printf"]
@@ -230,7 +230,7 @@ uuid = "9abbd945-dff8-562f-b5e8-e1ebf5ef1b79"
 
 [[PropertyT]]
 deps = ["AbstractAlgebra", "Dates", "GroupRings", "Groups", "IntervalArithmetic", "JLD", "JuMP", "LinearAlgebra", "Markdown", "MathProgBase", "Printf", "SparseArrays"]
-git-tree-sha1 = "3e12da8ca1869568104137bf12df5d3cd991ff29"
+git-tree-sha1 = "3fdb4f23ed0e161f6591e9e3201bf5847bcf2126"
 repo-rev = "master"
 repo-url = "https://github.com/kalmarek/PropertyT.jl"
 uuid = "03b72c93-0167-51e2-8a1e-eb4ff1fb940d"
