@@ -51,7 +51,7 @@ else
     RG = parent(Δ)
 
     @info "Computing Sq, Adj, Op"
-    @time sq, adj, op = SqAdjOp(RG, N)
+    @time sq, adj, op = PropertyT.SqAdjOp(RG, N)
 
     save(SQADJOP_FILE, "Sq", sq.coeffs, "Adj", adj.coeffs, "Op", op.coeffs)
 
