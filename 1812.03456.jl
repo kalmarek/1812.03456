@@ -78,7 +78,7 @@ if !isfile(SOLUTION_FILE)
 
     SDP_problem, varP = PropertyT.SOS_problem_primal(elt, Δ, block_decomposition; upper_bound=upper_bound)
 
-    with_SCS = JuMP.with_optimizer(SCS.Optimizer, linear_solver=SCS.Direct,
+    with_SCS = JuMP.with_optimizer(SCS.Optimizer, linear_solver=SCS.DirectSolver,
                              max_iters=500_000,
                              eps=scseps,
                              alpha=1.5,
