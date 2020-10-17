@@ -82,17 +82,16 @@ if !isfile(SOLUTION_FILE)
                              max_iters=500_000,
                              eps=scseps,
                              alpha=1.5,
-                             acceleration_lookback=1,
+                             acceleration_lookback=0,
                              warm_start=true)
 
     let
-        λ = Ps = ws = nothing
+        ws = nothing
         if isfile(WARMSTART_FILE)
             ws = load(WARMSTART_FILE, "warmstart")
         end
 
-        interrupted = false
-        status = nothing
+        status = JuMP.MOI.NO_SOLUTION
         while status != JuMP.MOI.OPTIMAL
             SOLVERLOG_FILE = joinpath(fullpath, "$(ELT_STRING)_solver_$(now()).log")
             @info "Recording solvers progress in" SOLVERLOG_FILE
@@ -101,26 +100,23 @@ if !isfile(SOLUTION_FILE)
             Ps = [value.(P) for P in varP]
 
             if all((!isnan).(ws[1])) # solution looks valid
+                @info "Warmstart looks valid, overriding $WARMSTART_FILE"
                 save(WARMSTART_FILE,
                     "warmstart", (ws.primal, ws.dual, ws.slack), "Ps", Ps, "λ", λ)
                 save(WARMSTART_FILE[1:end-4]*"$(now())"*".jld",
                     "warmstart", (ws.primal, ws.dual, ws.slack), "Ps", Ps, "λ", λ)
+                Threads.@spawn begin
+                    @info "Reconstructing Q..."
+                    Qs = real.(sqrt.(Ps))
+                    @time Q = PropertyT.reconstruct(Qs, orbit_data);
+                    save(SOLUTION_FILE, "λ", λ, "Q", Q)
+                end
+                sleep(5)
             else
-                @warn "No valid solution was saved!"
-                interrupted = true
+                @warn "No valid solution was saved!" status
                 break
             end
         end
-
-        if interrupted
-            @info "Reading the last saved warmstart for λ and Ps"
-            λ, Ps = load(WARMSTART_FILE, "λ", "Ps")
-        end
-
-        @info "Reconstructing Q..."
-        Qs = real.(sqrt.(Ps))
-        @time Q = PropertyT.reconstruct(Qs, orbit_data);
-        save(SOLUTION_FILE, "λ", λ, "Q", Q)
     end
 end
 
@@ -145,7 +141,7 @@ let EOI_int = elt - @interval(λ)*Δ;
     residual_int = SOS_residual(EOI_int, Q_int);
     @info "In interval arithmetic the ℓ₁-norm of the residual" norm(residual_int, 1);
 
-    λ_cert = @interval(λ) - 2^2*norm(residual_int,1)
+    λ_cert = @interval(λ) - 2*norm(residual_int,1)
     @info "λ is certified to be > " λ_cert.lo
     @info "i.e Adj_$N + $K·Op_$N - ($(λ_cert.lo))·Δ_$N ∈ Σ²₂ ISAut(F_$N)"
 end
