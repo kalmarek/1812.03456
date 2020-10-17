@@ -2,8 +2,6 @@
 AbstractAlgebra = "c3fe647b-3220-5bb0-a1ea-a7954cac585d"
 ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
-GroupRings = "0befed6a-bd73-11e8-1e41-a1190947c2f5"
-Groups = "5d8bd718-bd84-11e8-3b40-ad14f4a32557"
 IJulia = "7073ff75-c697-5162-941a-fcdaad2a7d2a"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 PropertyT = "03b72c93-0167-51e2-8a1e-eb4ff1fb940d"
