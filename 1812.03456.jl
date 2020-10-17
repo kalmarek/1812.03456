@@ -1,3 +1,9 @@
+include(joinpath("src", "argparse.jl"))
+const N, K, upper_bound, scseps = let
+    args = parse_commandline()
+    args["n"], args["k"], args["lambda"], args["tol"]
+end
+
 using SparseArrays
 using LinearAlgebra
 using Dates
@@ -8,15 +14,11 @@ using GroupRings
 using PropertyT
 using SCS
 
-using PropertyT.JuMP
+import PropertyT.JuMP
 using PropertyT.IntervalArithmetic
-
 using PropertyT.JLD
 
-include(joinpath("src", "argparse.jl"))
-N, K, LAMBDA, scseps = parse_args(ARGS)
-
-@info "Running checks for Adj_$N + $K·Op_$N - $LAMBDA·Δ_$N"
+@info "Running checks for Adj_$N + $K·Op_$N - $upper_bound·Δ_$N"
 
 G = AutGroup(FreeGroup(N), special=true)
 S = PropertyT.generating_set(G)
@@ -28,7 +30,7 @@ const DELTA_FILE = joinpath(prefix,"delta.jld")
 const SQADJOP_FILE = joinpath(prefix, "SqAdjOp_coeffs.jld")
 const ORBITDATA_FILE = joinpath(prefix, "OrbitData.jld")
 
-const fullpath = joinpath(prefix, "$(LAMBDA)_K=$K")
+const fullpath = joinpath(prefix, "$(upper_bound)_K=$K")
 isdir(fullpath) || mkpath(fullpath)
 const WARMSTART_FILE = joinpath(fullpath, "warmstart.jld")
 const SOLUTION_FILE = joinpath(fullpath, "solution.jld")
@@ -76,7 +78,7 @@ interrupted = false
 if !isfile(SOLUTION_FILE)
     @info "$SOLUTION_FILE not found, attempting to recreate one."
 
-    SDP_problem, varP = PropertyT.SOS_problem(elt, Δ, orbit_data; upper_bound=LAMBDA)
+    SDP_problem, varP = PropertyT.SOS_problem(elt, Δ, orbit_data; upper_bound=upper_bound)
 
     with_SCS = JuMP.with_optimizer(SCS.Optimizer, linear_solver=SCS.Direct,
                              max_iters=500_000,
@@ -96,8 +98,8 @@ if !isfile(SOLUTION_FILE)
             SOLVERLOG_FILE = joinpath(fullpath, "$(ELT_STRING)_solver_$(now()).log")
             @info "Recording solvers progress in" SOLVERLOG_FILE
             @time status, ws = PropertyT.solve(SOLVERLOG_FILE, SDP_problem, with_SCS, ws);
-            λ = value(SDP_problem[:λ])
-            Ps = [value.(P) for P in varP]
+            λ = JuMP.value(SDP_problem[:λ])
+            Ps = [JuMP.value.(P) for P in varP]
 
             if all((!isnan).(ws[1])) # solution looks valid
                 @info "Warmstart looks valid, overriding $WARMSTART_FILE"
@@ -120,7 +122,7 @@ if !isfile(SOLUTION_FILE)
     end
 end
 
-@info "Checking the sum of squares solution for Adj_N + $K·Op_N - $LAMBDA·Δ_N"
+@info "Checking the sum of squares solution for Adj_N + $K·Op_N - $upper_bound·Δ_N"
 Q, λ = load(SOLUTION_FILE, "Q", "λ")
 
 function SOS_residual(eoi::GroupRingElem, Q::Matrix)

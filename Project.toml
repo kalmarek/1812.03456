@@ -1,5 +1,6 @@
 [deps]
 AbstractAlgebra = "c3fe647b-3220-5bb0-a1ea-a7954cac585d"
+ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 GroupRings = "0befed6a-bd73-11e8-1e41-a1190947c2f5"
 Groups = "5d8bd718-bd84-11e8-3b40-ad14f4a32557"
