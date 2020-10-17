@@ -197,13 +197,15 @@ uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
 
 [[GroupRings]]
 deps = ["AbstractAlgebra", "LinearAlgebra", "SparseArrays"]
-path = "../../../.julia/dev/GroupRings"
+git-tree-sha1 = "6fc5382d8bc94cd2175c5725b03d0cbba565f1e4"
+repo-rev = "master"
+repo-url = "https://github.com/kalmarek/GroupRings.jl"
 uuid = "0befed6a-bd73-11e8-1e41-a1190947c2f5"
 version = "0.3.4"
 
 [[Groups]]
 deps = ["AbstractAlgebra", "LinearAlgebra", "ThreadsX"]
-path = "../../../.julia/dev/Groups"
+git-tree-sha1 = "91c7b74c1c26bef8e7174da01e799a7c0dbfaa38"
 uuid = "5d8bd718-bd84-11e8-3b40-ad14f4a32557"
 version = "0.5.1"
 
@@ -398,12 +400,12 @@ deps = ["Unicode"]
 uuid = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 
 [[PropertyT]]
-deps = ["AbstractAlgebra", "Dates", "GroupRings", "Groups", "IntervalArithmetic", "JLD", "JuMP", "LinearAlgebra", "Markdown", "MathProgBase", "Printf", "SparseArrays"]
-git-tree-sha1 = "3fdb4f23ed0e161f6591e9e3201bf5847bcf2126"
-repo-rev = "master"
+deps = ["AbstractAlgebra", "Dates", "GroupRings", "Groups", "IntervalArithmetic", "JLD", "JuMP", "LinearAlgebra", "SCS", "SparseArrays"]
+git-tree-sha1 = "41f4f9196420a4a04112b1ba15850078b7cce211"
+repo-rev = "enh/update_deps"
 repo-url = "https://github.com/kalmarek/PropertyT.jl"
 uuid = "03b72c93-0167-51e2-8a1e-eb4ff1fb940d"
-version = "0.3.0"
+version = "0.3.2"
 
 [[REPL]]
 deps = ["InteractiveUtils", "Markdown", "Sockets"]
