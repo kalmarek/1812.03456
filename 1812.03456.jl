@@ -23,7 +23,7 @@ using PropertyT.JLD
 G = AutGroup(FreeGroup(N), special=true)
 S = PropertyT.generating_set(G)
 
-const prefix = "oSAutF$(N)_r2"
+const prefix = "SAutF$(N)_r2"
 isdir(prefix) || mkpath(prefix)
 
 const DELTA_FILE = joinpath(prefix,"delta.jld")
@@ -105,13 +105,12 @@ if !isfile(SOLUTION_FILE)
                     "warmstart", (ws.primal, ws.dual, ws.slack), "Ps", Ps, "λ", λ)
                 save(WARMSTART_FILE[1:end-4]*"$(now())"*".jld",
                     "warmstart", (ws.primal, ws.dual, ws.slack), "Ps", Ps, "λ", λ)
-                Threads.@spawn begin
+                begin
                     @info "Reconstructing Q..."
                     Qs = real.(sqrt.(Ps))
                     @time Q = PropertyT.reconstruct(Qs, block_decomposition);
                     save(SOLUTION_FILE, "λ", λ, "Q", Q)
                 end
-                sleep(5)
             else
                 @warn "No valid solution was saved!" status
                 break
