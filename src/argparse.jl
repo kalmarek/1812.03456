@@ -1,47 +1,29 @@
-function parse_args(args)
-    invalid_use_message = """You need to call this script in the parent folder of oSAutF5_r2 folder.
-Provide also the two (numerical) parameters: `--k` (`-k`) and `--lambda` (`-l`).
-Optional prameters:
-\t `--n` (`-n`) [5]     : check/reconstruct solution for SAut(F_n)
-\t `--eps`	[1e-12] : SCS solver precision
-"""
+using ArgParse
 
-    iseven(length(args)) || throw(invalid_use_message)
-
-    n, k, λ, scseps = 5, nothing, nothing, 1e-12
-
-    for i in 1:2:length(ARGS)
-        arg = ARGS[i]
-        next_arg = ARGS[i+1]
-        if arg == "--k" || arg == "-k"
-            k = try
-                parse(Float64, next_arg)
-            catch
-                throw(invalid_use_message)
-            end
-        elseif arg == "--lambda" || arg == "-l"
-            λ = try
-                parse(Float64, next_arg)
-            catch
-                throw(invalid_use_message)
-            end
-        elseif arg == "--n" || arg == "-n"
-            n = try
-                parse(Int, next_arg)
-            catch
-                throw(invalid_use_message)
-            end
-        elseif arg == "--eps"
-            scseps = try
-                parse(Float64, next_arg)
-            catch
-                throw(invalid_use_message)
-            end
-        end
+function parse_commandline()
+    s = ArgParseSettings(
+    description="This program computes and/or verifies an approximate sum of squares decomposition for element
+    `Adj_n + k·Op_n - l·Δ_n ~ Σξ_i*ξ_i ∈ Σ²₂ ISAut(F_n)`.
+    Parameters `-n`, `-k` and `-l` must be provided when executing the script. \n",
+    preformatted_description=true)
+    @add_arg_table! s begin
+        "-n"
+            help = "Perform computations in automorphism group of the free group on `n` generators."
+            arg_type = Int
+            required = true
+        "-k"
+            help = "Compute sum of squares for `Adj_n + k·Op_n ∈ ISAut(F_n)`."
+            arg_type = Float64
+            required = true
+        "--lambda", "-l"
+            help = "upper bound on the amount of `Δ_n` contained in the element."
+            arg_type = Float64
+            required = true
+        "--tol"
+            help = "solvers numerical tolerance"
+            required = false
+            default = 1e-12
     end
-    
-    if isnothing(k) || isnothing(λ)
-        throw(invalid_use_message)
-    end
-    return n, k, λ, scseps
-end 
+
+    return parse_args(s)
+end
